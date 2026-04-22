@@ -12,7 +12,7 @@ A secure Python CLI application for managing address books with role-based acces
 
 ```bash
 # Clone the repository
-git clone https://github.com/TJhayes22/aba.git
+git clone https://github.com/TJhayes22/aba
 cd aba
 
 # Create virtual environment
