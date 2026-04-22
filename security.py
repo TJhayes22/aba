@@ -36,14 +36,12 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def check_password_strength(password: str) -> bool:
-    """Check if a password meets strength requirements.
+    """Check if a password meets strength requirements per spec.
     
-    Requirements:
-    - At least 8 characters
-    - At least one uppercase letter
-    - At least one lowercase letter
-    - At least one digit
-    - At least one special character (!@#$%^&*)
+    Requirements (per COMP 365 spec):
+    - 1-24 characters
+    - Only upper/lower-case letters or numbers
+    - Not "too easy to guess" (basic check: not all same char, not simple sequences)
     
     Args:
         password: The password to check.
@@ -51,29 +49,37 @@ def check_password_strength(password: str) -> bool:
     Returns:
         True if password is strong, False otherwise.
     """
-    if len(password) < 8:
+    # Check length: 1-24 chars
+    if len(password) < 1 or len(password) > 24:
         return False
     
-    has_upper = bool(re.search(r'[A-Z]', password))
-    has_lower = bool(re.search(r'[a-z]', password))
-    has_digit = bool(re.search(r'\d', password))
-    has_special = bool(re.search(r'[!@#$%^&*]', password))
+    # Check only letters and numbers
+    if not re.match(r'^[a-zA-Z0-9]+$', password):
+        return False
     
-    return has_upper and has_lower and has_digit and has_special
+    # Basic check: not too easy to guess (reject all same char)
+    if len(set(password)) == 1:
+        return False
+    
+    return True
 
 
-def validate_field(value: str, max_len: int, pattern: str | None = None) -> bool:
-    """Validate a field value against constraints.
+def validate_field(value: str, max_len: int = 64, pattern: str | None = None) -> bool:
+    """Validate a field value against constraints per spec.
     
     Args:
         value: The value to validate.
-        max_len: Maximum allowed length.
+        max_len: Maximum allowed length (default 64 per spec).
         pattern: Optional regex pattern to match against.
         
     Returns:
         True if valid, False otherwise.
     """
     if not value or len(value) > max_len:
+        return False
+    
+    # Check for printable ASCII only
+    if not all(32 <= ord(c) < 127 for c in value):
         return False
     
     if pattern is not None:

@@ -39,56 +39,69 @@ python main.py
 **WARNING: This application comes with a default admin account. If deploying in any shared environment, IMMEDIATELY change the password:**
 
 ```
-aba> login admin Admin@1234
-aba> passwd Admin@1234 [NEW_STRONG_PASSWORD]
+ABA> LIN admin
+[Enter new password on first login]
+ABA> CHP
+[Enter new strong password]
 ```
 
-**Default Credentials (Demo Only):**
-- Username: `admin`
-- Password: `Admin@1234`
+**Note:** Default admin account password is created on first login.
 
-## Commands
+## Commands (COMP 365 Specification v1.2.3)
 
-### Authentication
-- `help` — Show all available commands
-- `login <username> <password>` — Authenticate and start a session
-- `logout` — End the current session
-- `passwd <old_pw> <new_pw>` — Change your password
+### Authentication & Help
+- `HLP` — Display help for all commands
+- `HLP <command>` — Display help for specific command
+- `LIN <userID>` — Login (password created interactively on first use)
+- `LOU` — Logout
+- `CHP` — Change password (interactive password entry)
+- `EXT` — Exit application
 
 ### User Management (Admin Only)
-- `adduser <username> <password> [role]` — Add a new user (default role: user)
-- `deluser <username>` — Delete a user (cannot delete 'admin')
+- `ADU <userID>` — Add a new user account
+- `DEU <userID>` — Delete a user account
+- `LSU` — List all user accounts (admin only)
+- `DAL [userID]` — Display audit log (optionally filtered by user)
 
-### Address Records
-- `addrec <name> <phone> <email> <address>` — Add a new address record
-- `getrec <record_id>` — Retrieve a record by ID
-- `editrec <record_id> <name> <phone> <email> <address>` — Edit an existing record
-- `delrec <record_id>` — Delete a record
+### Address Records (User Commands)
+- `ADR <recordID> [field=value...]` — Add a new address record
+  - Fields: SN (surname), GN (given name), PEM (personal email), WEM (work email), PPH (personal phone), WPH (work phone), SA (street address), CITY, STP (state/province), CTY (country), PC (postal code)
+  - Example: `ADR 001 SN=Smith GN=John PEM=john@email.com WPH=555-1234`
+- `RER [recordID] [fieldnames...]` — Read record(s)
+  - No arguments: returns all user records
+  - With recordID only: returns specific record
+  - With field list: returns specific fields from record
+- `EDR <recordID> <field=value...>` — Edit an existing record
+- `DER <recordID>` — Delete a record
 
-### Admin Functions
-- `showlog` — View the audit log (admin only)
+### Import/Export (User Commands)
+- `IMD <Input_File>` — Import records from CSV file (semicolon-delimited)
+- `EXD <Output_File>` — Export records to CSV file (semicolon-delimited)
 
-### Import/Export
-- `import <filepath>` — Import records from JSON file
-- `export <filepath>` — Export records to JSON file
+### CSV Format (Semicolon-Delimited)
+```
+recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
+001;Smith;John;john@personal.com;john@work.com;555-1234;555-5678;123 Main St;Springfield;IL;USA;62701
+```
 
 ## Features
 
-- **Secure password hashing** — bcrypt with configurable rounds
+- **COMP 365 Specification Compliant** — Meets formal address book application requirements
+- **Secure password hashing** — bcrypt with salt for password protection
 - **Role-based access control** — Admin and User roles with granular permissions
-- **Audit logging** — Complete audit trail with ISO timestamps
-- **Import/export** — Secure backup and restore of address records
-- **Account lockout** — Protection against brute force (5 failed attempts = 300s lockout)
+- **Audit logging** — Complete audit trail with timestamps and operation types
+- **CSV import/export** — Semicolon-delimited CSV format per specification
+- **First-time login password creation** — Users create passwords on first login
 - **Path sanitization** — Prevents directory traversal attacks
-- **Input validation** — Strict field length and format validation
-- **Session management** — Secure authentication with token-like sessions
+- **Input validation** — Field length (max 64 chars) and format validation
+- **Session management** — Secure session state tracking
 
 ## Data Storage
 
 Persistent data is stored locally in the `data/` directory:
 - `users.json` — User accounts with bcrypt-hashed passwords
-- `records.json` — Address book records with ownership metadata
-- `audit.log` — Audit trail with timestamps and outcomes
+- `records.json` — Address book records with 11 formal fields
+- `audit.log` — Audit trail with timestamps and operation codes
 
 **Note:** The `data/` directory is not tracked by Git for privacy.
 
@@ -98,26 +111,30 @@ Persistent data is stored locally in the `data/` directory:
 - Bcrypt hashing with random salts
 - Role-based access control (RBAC) enforced by reference monitor
 - Record ownership validation — users can only access their own records
-- Account lockout after 5 failed login attempts
+- Password requirements per spec: 1-24 alphanumeric characters only (letters a-z, A-Z, 0-9)
 - Path sanitization blocks directory traversal attacks
-- Field length and format validation on all inputs
+- Field length and format validation (max 64 characters per field)
 - Complete audit trail of all operations
 - File permissions set to 0o600 (user read/write only)
+- Directory permissions set to 0o700 (user read/write/execute only)
 
 ## Project Structure
 
 ```
 aba/
-├── main.py                  # Application entry point
-├── cli.py                   # Command parsing and dispatch
-├── session.py               # Session state management
-├── auth.py                  # Authentication logic
-├── security.py              # Password hashing and validation
-├── storage.py               # Persistent file I/O
-├── reference_monitor.py     # Access control enforcement
-├── audit.py                 # Event logging
-├── user_manager.py          # User CRUD operations
-├── record_manager.py        # Address record CRUD operations
+├── main.py                  # Application entry point and REPL loop
+├── cli.py                   # Command parsing (LIN, LOU, etc.) and dispatch
+├── session.py               # Session state management (username, role, auth status)
+├── auth.py                  # Authentication logic (login, logout, password change)
+├── security.py              # Password hashing (bcrypt), validation, and field validation
+├── storage.py               # Persistent file I/O (JSON users/records, audit.log)
+├── reference_monitor.py     # Access control enforcement (single source of authorization)
+├── audit.py                 # Event logging with timestamps
+├── user_manager.py          # User CRUD operations (add, delete, list)
+├── record_manager.py        # Address record CRUD with 11 formal fields (SN, GN, PEM, etc.)
+├── import_export.py         # CSV import/export (semicolon-delimited per spec)
+├── requirements.txt         # Python dependencies (bcrypt)
+└── README.md                # This file
 ├── import_export.py         # Secure import/export functionality
 ├── requirements.txt         # Python dependencies
 ├── README.md                # This file

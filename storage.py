@@ -20,12 +20,15 @@ def _ensure_data_dir():
 
 
 def _ensure_users_seeded():
-    """Create default admin user if users.json doesn't exist."""
+    """Create default admin user if users.json doesn't exist.
+    
+    Per COMP 365 spec: admin user exists on first run with no password set.
+    Admin must create password on first login attempt (LIN admin).
+    """
     if not os.path.exists(USERS_FILE):
-        default_admin_password = "Admin@1234"
         users = {
             "admin": {
-                "password_hash": hash_password(default_admin_password),
+                "password_hash": "",  # No password set initially
                 "role": "admin"
             }
         }

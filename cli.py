@@ -1,11 +1,9 @@
-"""CLI interface for ABA."""
+"""CLI interface for ABA per COMP 365 spec."""
 
 import auth
 import user_manager
 import record_manager
 import import_export
-import audit
-from reference_monitor import check_access
 
 
 def parse_command(raw: str) -> tuple[str, list[str]]:
@@ -22,207 +20,258 @@ def parse_command(raw: str) -> tuple[str, list[str]]:
     if not tokens:
         return ("", [])
     
-    command = tokens[0].lower()
+    command = tokens[0].upper()  # Spec uses uppercase commands
     args = tokens[1:]
     
     return (command, args)
 
 
-def parse_record_args(args: list[str]) -> dict:
-    """Parse record arguments into a dictionary.
-    
-    Expected format:
-    name phone email address
-    Or:
-    name=value phone=value email=value address=value
+def parse_record_fields(args: list[str]) -> dict:
+    """Parse record field arguments in field=value format.
     
     Args:
         args: List of arguments.
         
     Returns:
-        Dictionary with record fields.
+        Dictionary with field values.
     """
     result = {}
-    
-    # Try key=value format first
-    if args and "=" in args[0]:
-        for arg in args:
-            if "=" in arg:
-                key, value = arg.split("=", 1)
-                result[key] = value
-    else:
-        # Positional format: name phone email address
-        field_names = ["name", "phone", "email", "address"]
-        for i, field_name in enumerate(field_names):
-            if i < len(args):
-                result[field_name] = args[i]
-    
+    for arg in args:
+        if "=" in arg:
+            key, value = arg.split("=", 1)
+            result[key.strip()] = value.strip()
     return result
 
 
-def print_help() -> str:
-    """Return help text listing all commands.
+def print_help(command_name: str = None) -> str:
+    """Return help text for commands (HLP command).
     
+    Args:
+        command_name: Optional specific command to show help for.
+        
     Returns:
         Help text string.
     """
-    help_text = """
-ABA - Address Book Appliance
+    if command_name:
+        help_text = {
+            "LIN": "LIN <userID>\n  Login to an account",
+            "LOU": "LOU\n  Logout from current account",
+            "CHP": "CHP <old_password>\n  Change password",
+            "ADU": "ADU <userID>\n  Add new user (admin only)",
+            "DEU": "DEU <userID>\n  Delete user (admin only)",
+            "LSU": "LSU\n  List all users (admin only)",
+            "DAL": "DAL [<userID>]\n  Display audit log (admin only)",
+            "ADR": "ADR <recordID> [<field=value> ...]\n  Add address record",
+            "RER": "RER [<recordID>] [<fieldname> ...]\n  Read record",
+            "EDR": "EDR <recordID> <field=value> [<field=value> ...]\n  Edit record",
+            "DER": "DER <recordID>\n  Delete record",
+            "IMD": "IMD <Input_File>\n  Import records from CSV file",
+            "EXD": "EXD <Output_File>\n  Export records to CSV file",
+            "HLP": "HLP [<command>]\n  Show help",
+            "EXT": "EXT\n  Exit program"
+        }
+        return help_text.get(command_name.upper(), "Unrecognized command")
+    
+    full_help = """Address Book Appliance (ABA) Commands:
 
-Commands:
-  help                          Show this help message
-  login <username> <password>   Log in to the system
-  logout                        Log out of the system
-  passwd <old_pw> <new_pw>      Change your password
-  adduser <username> <passwd>   Add a new user (admin only)
-  deluser <username>            Delete a user (admin only)
-  showlog                       View audit log (admin only)
-  addrec <name> <phone> <email> <address>
-                                Add a new address record
-  getrec <record_id>            Get a record by ID
-  editrec <record_id> <name> <phone> <email> <address>
-                                Edit a record
-  delrec <record_id>            Delete a record
-  import <filepath>             Import records from JSON file
-  export <filepath>             Export records to JSON file
-""".strip()
-    return help_text
+LIN <userID>                  Login to an account
+LOU                           Logout from current account
+CHP <old_password>            Change password
+ADU <userID>                  Add new user (admin only)
+DEU <userID>                  Delete user (admin only)
+LSU                           List all users (admin only)
+DAL [<userID>]                Display audit log (admin only)
+ADR <recordID> [fields...]    Add address record
+RER [<recordID>] [fields...]  Read record(s)
+EDR <recordID> <fields...>    Edit record
+DER <recordID>                Delete record
+IMD <Input_File>              Import records from CSV file
+EXD <Output_File>             Export records to CSV file
+HLP [<command>]               Show help
+EXT                           Exit program
+"""
+    return full_help
 
 
-def dispatch(command: str, args: list[str], session) -> str | list[str]:
+def dispatch(command: str, args: list[str], session) -> tuple[str, bool]:
     """Dispatch a command to its handler.
     
     Args:
-        command: The command to execute.
+        command: The command to execute (uppercase).
         args: List of arguments for the command.
         session: The user's session object.
         
     Returns:
-        String result to print to the user.
+        Tuple of (result_message: str, should_exit: bool).
     """
-    if command == "help":
-        return print_help()
+    if command == "HLP":
+        if args:
+            return (print_help(args[0]), False)
+        return (print_help(), False)
     
-    elif command == "login":
-        if len(args) < 2:
-            return "Usage: login <username> <password>"
-        success, message = auth.login(args[0], args[1], session)
-        outcome = "success" if success else "failure"
-        audit.log_event("SYSTEM" if not success else args[0], "LOGIN", args[0], outcome)
-        return message
+    elif command == "EXT":
+        if session.is_authenticated:
+            session.reset()
+        return ("OK", True)
     
-    elif command == "logout":
+    elif command == "LIN":
+        if not args:
+            return ("Invalid userID", False)
+        
+        # Check if user exists (to determine if first time)
+        import storage
+        users = storage.load_users()
+        is_first_time = args[0] not in users or not users[args[0]].get("password_hash")
+        
+        success, message = auth.login(args[0], is_first_time, session)
+        return (message, False)
+    
+    elif command == "LOU":
         success, message = auth.logout(session)
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "LOGOUT", actor, outcome)
-        return message
+        return (message, False)
     
-    elif command == "passwd":
-        if len(args) < 2:
-            return "Usage: passwd <old_password> <new_password>"
-        success, message = auth.change_password(session, args[0], args[1])
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "CHANGE_PW", actor, outcome)
-        return message
+    elif command == "CHP":
+        if not args:
+            return ("Invalid credentials", False)
+        success, message = auth.change_password(session, args[0])
+        return (message, False)
     
-    elif command == "adduser":
-        if len(args) < 2:
-            return "Usage: adduser <username> <password>"
-        role = args[2] if len(args) > 2 else "user"
-        success, message = user_manager.add_user(session, args[0], args[1], role)
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "ADD_USER", args[0], outcome)
-        return message
+    elif command == "ADU":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role != "admin":
+            return ("Admin not active", False)
+        if not args:
+            return ("Invalid userID", False)
+        
+        success, message = user_manager.add_user(session, args[0])
+        return (message, False)
     
-    elif command == "deluser":
-        if len(args) < 1:
-            return "Usage: deluser <username>"
+    elif command == "DEU":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role != "admin":
+            return ("Admin not active", False)
+        if not args:
+            return ("Invalid userID", False)
+        
         success, message = user_manager.delete_user(session, args[0])
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "DELETE_USER", args[0], outcome)
-        return message
+        return (message, False)
     
-    elif command == "showlog":
-        success, content = audit.display_log(session)
-        if not success:
-            outcome = "failure"
-            audit.log_event(session.username if session.is_authenticated else "SYSTEM", "VIEW_LOG", "audit_log", outcome)
-            return content
-        outcome = "success"
-        audit.log_event(session.username, "VIEW_LOG", "audit_log", outcome)
-        if isinstance(content, list):
-            return "\n".join(content) if content else "(empty log)"
-        return content
+    elif command == "LSU":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role != "admin":
+            return ("Admin not active", False)
+        
+        users_list = user_manager.list_users(session)
+        return (users_list, False)
     
-    elif command == "addrec":
-        if len(args) < 4:
-            return "Usage: addrec <name> <phone> <email> <address>"
-        fields = parse_record_args(args)
-        success, result = record_manager.add_record(session, fields)
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        target = result if success else "unknown"
-        audit.log_event(actor, "ADD_RECORD", target, outcome)
-        if success:
-            return f"Record added with ID: {result}"
-        return result
+    elif command == "DAL":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role != "admin":
+            return ("Admin not active", False)
+        
+        target_user = args[0] if args else None
+        result = user_manager.display_audit_log(session, target_user)
+        return (result, False)
     
-    elif command == "getrec":
-        if len(args) < 1:
-            return "Usage: getrec <record_id>"
-        success, result = record_manager.get_record(session, args[0])
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "GET_RECORD", args[0], outcome)
-        if success:
-            r = result
-            return f"Record: name={r['name']}, phone={r['phone']}, email={r['email']}, address={r['address']}"
-        return result
-    
-    elif command == "editrec":
-        if len(args) < 5:
-            return "Usage: editrec <record_id> <name> <phone> <email> <address>"
+    elif command == "ADR":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role == "admin":
+            return ("Admin not authorized", False)
+        if not args:
+            return ("No recordID", False)
+        
         record_id = args[0]
-        fields = parse_record_args(args[1:])
+        fields = {"recordID": record_id}
+        fields.update(parse_record_fields(args[1:]))
+        
+        success, result = record_manager.add_record(session, fields)
+        return (result if not success else f"OK\n{result}", False)
+    
+    elif command == "RER":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role == "admin":
+            return ("Admin not authorized", False)
+        
+        record_id = args[0] if args else None
+        field_names = args[1:] if len(args) > 1 else None
+        
+        success, result = record_manager.get_record(session, record_id, field_names)
+        if not success:
+            return (result, False)
+        
+        # Format output
+        if isinstance(result, list):
+            output_lines = []
+            for rec in result:
+                line = f"{rec.get('recordID', '')}"
+                for fn in record_manager.FIELD_NAMES:
+                    if fn in rec:
+                        line += f" {fn}={rec[fn]}"
+                output_lines.append(line)
+            return ("\n".join(output_lines), False)
+        else:
+            line = f"{result.get('recordID', '')}"
+            for fn in record_manager.FIELD_NAMES:
+                if fn in result:
+                    line += f" {fn}={result[fn]}"
+            return (line, False)
+    
+    elif command == "EDR":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role == "admin":
+            return ("Admin not authorized", False)
+        if not args:
+            return ("No recordID", False)
+        
+        record_id = args[0]
+        fields = parse_record_fields(args[1:])
+        
         success, message = record_manager.edit_record(session, record_id, fields)
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "EDIT_RECORD", record_id, outcome)
-        return message
+        return (message, False)
     
-    elif command == "delrec":
-        if len(args) < 1:
-            return "Usage: delrec <record_id>"
+    elif command == "DER":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role == "admin":
+            return ("Admin not authorized", False)
+        if not args:
+            return ("No recordID", False)
+        
         success, message = record_manager.delete_record(session, args[0])
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "DELETE_RECORD", args[0], outcome)
-        return message
+        return (message, False)
     
-    elif command == "import":
-        if len(args) < 1:
-            return "Usage: import <filepath>"
+    elif command == "IMD":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role == "admin":
+            return ("Admin not authorized", False)
+        if not args:
+            return ("No Input_file specified", False)
+        
         success, message = import_export.import_db(session, args[0])
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "IMPORT", args[0], outcome)
-        return message
+        return (message, False)
     
-    elif command == "export":
-        if len(args) < 1:
-            return "Usage: export <filepath>"
+    elif command == "EXD":
+        if not session.is_authenticated:
+            return ("No active login session", False)
+        if session.role == "admin":
+            return ("Admin not authorized", False)
+        if not args:
+            return ("No Output_file specified", False)
+        
         success, message = import_export.export_db(session, args[0])
-        actor = session.username if session.is_authenticated else "SYSTEM"
-        outcome = "success" if success else "failure"
-        audit.log_event(actor, "EXPORT", args[0], outcome)
-        return message
+        return (message, False)
     
     elif command == "":
-        return ""
+        return ("", False)
     
     else:
-        return "Unknown command. Type 'help' for usage."
+        return ("Unrecognized command", False)
+
