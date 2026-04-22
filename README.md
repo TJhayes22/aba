@@ -134,7 +134,6 @@ aba/
 ├── record_manager.py        # Address record CRUD with 11 formal fields (SN, GN, PEM, etc.)
 ├── import_export.py         # CSV import/export (semicolon-delimited per spec)
 ├── requirements.txt         # Python dependencies (bcrypt)
-└── README.md                # This file
 ├── import_export.py         # Secure import/export functionality
 ├── requirements.txt         # Python dependencies
 ├── README.md                # This file
