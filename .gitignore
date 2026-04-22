@@ -1,0 +1,15 @@
+"
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.DS_Store
+data/
+exports/
+" | Out-File -Encoding UTF8 .gitignore
