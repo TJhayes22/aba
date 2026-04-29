@@ -1,3 +1,4 @@
 bcrypt
 pytest>=7.0.0
 pytest-cov
+pylint>=2.15.0

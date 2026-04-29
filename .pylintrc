@@ -1,0 +1,110 @@
+[MASTER]
+# Use multiple processes to speed up Pylint. Specifying 0 will auto-detect the
+# number of processors available to use.
+jobs=1
+
+# The minimum Python version to target
+py-version=3.9
+
+[MESSAGES CONTROL]
+# Disable the message, report, category or checker with the given id(s). You
+# can either give multiple identifiers separated by comma (,) or put this
+# option multiple times (only on the command line, not in the configuration
+# file where it should appear only once).You can also use "--disable=all" to
+# disable everything first and then reenable specific checks. For example, if
+# you want to run only the similarities checker, you can use "--disable=all
+# --enable=similarities". If you want to run only the classes checker, but have
+# no Warning level messages displayed, use "--disable=all --enable=classes
+# --disable=W".
+
+disable=
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    C0303,  # trailing-whitespace
+    C0301,  # line-too-long
+    W0511,  # fixme
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=100
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=8
+
+# Maximum number of locals for function / method body
+max-locals=20
+
+[SIMILARITIES]
+# Minimum lines number d'un similarity.
+min-similarity-lines=6
+
+[LOGGING]
+# Format of logging function call. The format can contain symbols like
+# interpolation named formatting, logging parameterized formatting or logging
+# sprintf formatting
+logging-format-style=old
+
+[VARIABLES]
+# List of additional names supposed to be defined in builtins. Remember that
+# you should avoid defining new builtins when possible.
+additional-builtins=
+
+[REPORTS]
+# Set the output format used when reporting messages. Available formats are
+# text, parseable, colorized, json and msvs (visual studio). You can also give
+# a reporter class e.g. mypackage.mymodule.MyReporterClass --rcfile=.
+output-format=text
+
+# Tells whether to display a full report or only the messages.
+reports=yes
+
+# Python expression which should return a score less than or equal to 10 (10 is
+# the highest value). This score is used to evaluate overall module quality and
+# used by the global evaluation report (RP0004). It is based on the sudden
+# functions number, the number of abort (exit) statement found per function, and
+# the overall module consistency. This score is therefore quite high and
+# integrates many programming principals. Python tries to be smart when
+# evaluating the score, find the formula in the documentation of this method.
+evaluation=max(0,0 if fatal else 10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10))
+
+[BASIC]
+# Good variable names which should always be accepted, separated by a comma.
+good-names=i,j,k,ex,Run,_,r,e,f,id
+
+# Naming style matching correct module names. See identity naming styles
+# documentation for implementation details
+module-naming-style=snake_case
+
+# Naming style matching correct constant names. See identity naming styles
+# documentation for implementation details
+const-naming-style=UPPER_CASE
+
+# Naming style matching correct class names. See identity naming styles
+# documentation for implementation details
+class-naming-style=PascalCase
+
+# Naming style matching correct function names. See identity naming styles
+# documentation for implementation details
+function-naming-style=snake_case
+
+# Naming style matching correct variable names. See identity naming styles
+# documentation for implementation details
+variable-naming-style=snake_case
+
+# Naming style matching correct attribute names. See identity naming styles
+# documentation for implementation details
+attr-naming-style=snake_case
+
+# Naming style matching correct argument names. See identity naming styles
+# documentation for implementation details
+argument-naming-style=snake_case
+
+# Naming style matching correct class attribute names. See identity naming styles
+# documentation for implementation details
+class-attribute-naming-style=snake_case
+
+# Naming style matching correct inline iteration names. See identity naming styles
+# documentation for implementation details
+inlinevar-naming-style=snake_case

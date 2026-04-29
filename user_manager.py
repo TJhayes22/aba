@@ -84,7 +84,7 @@ def delete_user(session, username: str) -> tuple[bool, str]:
     return (True, "OK")
 
 
-def list_users(session) -> str:
+def list_users(_session) -> str:
     """List all user accounts (LSU command).
     
     Args:
@@ -98,18 +98,16 @@ def list_users(session) -> str:
     return "\n".join(user_list)
 
 
-def display_audit_log(session, target_user: str = None) -> str:
+def display_audit_log(_session, target_user=None) -> str:
     """Display audit log entries (DAL command).
     
     Args:
-        session: The session of the admin user.
+        _session: The session of the admin user.
         target_user: Optional specific user to filter for.
         
     Returns:
         String with audit log entries.
     """
-    import storage
-    
     # Validate target user if specified
     if target_user:
         users = storage.load_users()
@@ -128,4 +126,3 @@ def display_audit_log(session, target_user: str = None) -> str:
         return "OK"
     
     return "\n".join(audit_entries)
-

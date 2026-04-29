@@ -2,8 +2,6 @@
 
 import os
 import json
-from pathlib import Path
-from security import hash_password
 
 
 DATA_DIR = "data"
@@ -48,7 +46,7 @@ def load_users() -> dict:
         return load_users()
     
     try:
-        with open(USERS_FILE, 'r') as f:
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception:
         return {}
@@ -63,7 +61,7 @@ def save_users(users: dict):
     _ensure_data_dir()
     
     try:
-        with open(USERS_FILE, 'w') as f:
+        with open(USERS_FILE, "w", encoding='utf-8') as f:
             json.dump(users, f, indent=2)
         os.chmod(USERS_FILE, 0o600)
     except Exception:
@@ -82,7 +80,7 @@ def load_records() -> dict:
         return {}
     
     try:
-        with open(RECORDS_FILE, 'r') as f:
+        with open(RECORDS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception:
         return {}
@@ -97,7 +95,7 @@ def save_records(records: dict):
     _ensure_data_dir()
     
     try:
-        with open(RECORDS_FILE, 'w') as f:
+        with open(RECORDS_FILE, "w", encoding='utf-8') as f:
             json.dump(records, f, indent=2)
         os.chmod(RECORDS_FILE, 0o600)
     except Exception:
@@ -113,7 +111,7 @@ def append_audit(entry: str):
     _ensure_data_dir()
     
     try:
-        with open(AUDIT_LOG_FILE, 'a') as f:
+        with open(AUDIT_LOG_FILE, "a", encoding='utf-8') as f:
             f.write(entry + '\n')
         os.chmod(AUDIT_LOG_FILE, 0o600)
     except Exception:

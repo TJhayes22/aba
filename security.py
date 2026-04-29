@@ -1,8 +1,10 @@
 """Security functions for ABA."""
 
-import bcrypt
-import re
 import os
+import re
+from typing import List, Optional
+
+import bcrypt
 
 
 def hash_password(password: str) -> str:
@@ -64,7 +66,7 @@ def check_password_strength(password: str) -> bool:
     return True
 
 
-def validate_field(value: str, max_len: int = 64, pattern: str | None = None) -> bool:
+def validate_field(value: str, max_len: int = 64, pattern: Optional[str] = None) -> bool:
     """Validate a field value against constraints per spec.
     
     Args:
@@ -89,7 +91,7 @@ def validate_field(value: str, max_len: int = 64, pattern: str | None = None) ->
     return True
 
 
-def sanitize_path(path: str, approved_dirs: list[str]) -> str | None:
+def sanitize_path(path: str, approved_dirs: List[str]) -> Optional[str]:
     """Sanitize and validate a file path against approved directories.
     
     Args:

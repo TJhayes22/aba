@@ -1,6 +1,7 @@
 """Record management for ABA."""
 
-import uuid
+from typing import Optional, Union
+
 import storage
 from security import validate_field
 from reference_monitor import check_access
@@ -13,7 +14,7 @@ MAX_RECORDS_PER_USER = 256
 MAX_RECORD_ID_LEN = 64
 
 
-def add_record(session, fields: dict) -> tuple[bool, str]:
+def add_record(session, fields: dict) -> tuple[bool, Optional[str]]:
     """Add a new address record (ADR command).
     
     Args:
@@ -68,7 +69,7 @@ def add_record(session, fields: dict) -> tuple[bool, str]:
     return (True, record_id)
 
 
-def get_record(session, record_id: str = None, field_names: list = None) -> tuple[bool, dict | str | list]:
+def get_record(session, record_id: Optional[str] = None, field_names: Optional[list] = None) -> tuple[bool, Union[dict, str, list]]:
     """Retrieve a record by ID (RER command).
     
     If no record_id specified, returns all records for the user.
@@ -201,4 +202,3 @@ def delete_record(session, record_id: str) -> tuple[bool, str]:
     storage.save_records(records)
     
     return (True, "OK")
-

@@ -1,6 +1,9 @@
 """CLI interface for ABA per COMP 365 spec."""
 
+from typing import Optional
+
 import auth
+import storage
 import user_manager
 import record_manager
 import import_export
@@ -43,7 +46,7 @@ def parse_record_fields(args: list[str]) -> dict:
     return result
 
 
-def print_help(command_name: str = None) -> str:
+def print_help(command_name: Optional[str] = None) -> str:
     """Return help text for commands (HLP command).
     
     Args:
@@ -119,7 +122,6 @@ def dispatch(command: str, args: list[str], session) -> tuple[str, bool]:
             return ("Invalid userID", False)
         
         # Check if user exists (to determine if first time)
-        import storage
         users = storage.load_users()
         is_first_time = args[0] not in users or not users[args[0]].get("password_hash")
         
@@ -192,7 +194,7 @@ def dispatch(command: str, args: list[str], session) -> tuple[str, bool]:
         success, result = record_manager.add_record(session, fields)
         return (result if not success else f"OK\n{result}", False)
     
-    elif command == "RER":
+    if command == "RER":
         if not session.is_authenticated:
             return ("No active login session", False)
         if session.role == "admin":
@@ -236,7 +238,7 @@ def dispatch(command: str, args: list[str], session) -> tuple[str, bool]:
         success, message = record_manager.edit_record(session, record_id, fields)
         return (message, False)
     
-    elif command == "DER":
+    if command == "DER":
         if not session.is_authenticated:
             return ("No active login session", False)
         if session.role == "admin":
@@ -274,4 +276,3 @@ def dispatch(command: str, args: list[str], session) -> tuple[str, bool]:
     
     else:
         return ("Unrecognized command", False)
-

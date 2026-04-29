@@ -1,5 +1,7 @@
 """Reference monitor for access control in ABA."""
 
+from typing import Optional
+
 # Action constants
 HELP = "HELP"
 LOGIN = "LOGIN"
@@ -16,7 +18,7 @@ IMPORT = "IMPORT"
 EXPORT = "EXPORT"
 
 
-def check_access(session, action: str, obj: dict | None = None) -> bool:
+def check_access(session, action: str, obj: Optional[dict] = None) -> bool:
     """Check if a session has access to perform an action.
     
     Args:

@@ -1,4 +1,3 @@
-"
 .venv/
 venv/
 env/
@@ -13,4 +12,6 @@ __pycache__/
 data/
 exports/
 .coverage
-" | Out-File -Encoding UTF8 .gitignore
+htmlcov/
+.pytest_cache/
+pylint_report.txt

@@ -3,12 +3,12 @@
 from session import Session
 from cli import parse_command, dispatch
 
+# Version per COMP 365 spec
+VERSION = "1.2.3"  # pylint: disable=invalid-name
+
 
 def main():
     """Main loop for the ABA CLI application."""
-    # Get version from spec (1.2.3)
-    VERSION = "1.2.3"
-    
     session = Session()
     print(f"Address Book Application, version {VERSION}. Type \"HLP\" for a list of commands.")
     

@@ -3,7 +3,7 @@
 import os
 import csv
 import storage
-from security import sanitize_path, validate_field
+from security import validate_field
 from reference_monitor import check_access
 
 
@@ -100,7 +100,7 @@ def import_db(session, filepath: str) -> tuple[bool, str]:
     user_records.update(imported_records)
     storage.save_records(user_records)
     
-    return (True, f"OK")
+    return (True, "OK")
 
 
 def export_db(session, filepath: str) -> tuple[bool, str]:
@@ -155,4 +155,3 @@ def export_db(session, filepath: str) -> tuple[bool, str]:
         return (False, "Can't open Output_file")
     except Exception:
         return (False, "Error writing Output_file")
-

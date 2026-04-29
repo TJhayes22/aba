@@ -1,6 +1,8 @@
 """Audit logging for ABA."""
 
 from datetime import datetime, timezone
+from typing import Optional
+
 import storage
 from reference_monitor import check_access
 
@@ -19,7 +21,7 @@ def log_event(actor: str, action: str, target: str, outcome: str):
     storage.append_audit(entry)
 
 
-def display_log(session) -> tuple[bool, list[str] | str]:
+def display_log(session) -> tuple[bool, Optional[list]]:
     """Display the audit log if user has access.
     
     Args:

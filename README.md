@@ -86,6 +86,34 @@ recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
 
 ## Testing
 
+### Run Tests
+
+```bash
+# Run all tests with pytest
+python -m pytest tests/ -v
+
+# Run tests with coverage report
+python -m pytest tests/ --cov=. --cov-report=html
+```
+
+All 103 tests verify security functionality, CRUD operations, access control, import/export, and audit logging.
+
+## Code Quality
+
+### Run Pylint Analysis
+
+```bash
+# Run pylint on all source files and save report
+.venv\Scripts\python.exe -m pylint audit.py auth.py cli.py import_export.py main.py record_manager.py reference_monitor.py security.py session.py storage.py user_manager.py --rcfile=.pylintrc --output-format=text --reports=yes > pylint_report.txt
+
+# Or use the bash script (Linux/Mac with bash or WSL)
+bash run_pylint.sh
+```
+
+Configure settings in `.pylintrc`. Current score: **9.56/10**
+
+## Testing
+
 ### Install Test Dependencies
 ```bash
 pip install -r requirements.txt
