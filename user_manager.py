@@ -1,6 +1,7 @@
 """User management for ABA."""
 
 import storage
+from reference_monitor import check_access, ADD_USER, DELETE_USER
 
 
 APPROVED_ROLES = ["user", "admin"]
@@ -17,6 +18,10 @@ def add_user(session, username: str) -> tuple[bool, str]:
     Returns:
         Tuple of (success: bool, message: str).
     """
+    # Check access (admin only)
+    if not check_access(session, ADD_USER):
+        return (False, "Admin not authorized")
+    
     # Validate username: alphanumeric, 1-16 chars
     if not username or len(username) > MAX_USERNAME_LEN:
         return (False, "Invalid userID")
@@ -49,6 +54,10 @@ def delete_user(session, username: str) -> tuple[bool, str]:
     Returns:
         Tuple of (success: bool, message: str).
     """
+    # Check access (admin only)
+    if not check_access(session, DELETE_USER):
+        return (False, "Admin not authorized")
+    
     # Validate username format
     if not username or len(username) > MAX_USERNAME_LEN:
         return (False, "Invalid userID")

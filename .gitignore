@@ -12,4 +12,5 @@ __pycache__/
 .DS_Store
 data/
 exports/
+.coverage
 " | Out-File -Encoding UTF8 .gitignore

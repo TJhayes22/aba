@@ -84,6 +84,45 @@ recordID;SN;GN;PEM;WEM;PPH;WPH;SA;CITY;STP;CTY;PC
 001;Smith;John;john@personal.com;john@work.com;555-1234;555-5678;123 Main St;Springfield;IL;USA;62701
 ```
 
+## Testing
+
+### Install Test Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Run All Tests
+```bash
+pytest tests/ -v
+```
+
+### Run Specific Test File
+```bash
+pytest tests/test_security.py -v
+pytest tests/test_auth.py -v
+```
+
+### Run Tests with Coverage Report
+```bash
+pip install pytest-cov
+pytest tests/ --cov=. --cov-report=html
+```
+
+## Test Suite Structure
+
+The test suite is organized in `tests/`:
+
+- **conftest.py** — Shared pytest fixtures (session objects, temporary data directories, seeded data)
+- **test_security.py** — Password hashing, validation, field validation, path sanitization
+- **test_auth.py** — Login, logout, password change with lockout testing
+- **test_reference_monitor.py** — Access control enforcement for all user roles
+- **test_record_manager.py** — Record CRUD operations with ownership validation
+- **test_import_export.py** — CSV import/export with validation and file limits
+- **test_audit.py** — Event logging and audit log display
+- **test_integration.py** — End-to-end workflows (10 integration tests)
+
+**Total: 60+ test cases covering all core functionality.**
+
 ## Features
 
 - **COMP 365 Specification Compliant** — Meets formal address book application requirements

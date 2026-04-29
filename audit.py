@@ -1,6 +1,6 @@
 """Audit logging for ABA."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 import storage
 from reference_monitor import check_access
 
@@ -14,7 +14,7 @@ def log_event(actor: str, action: str, target: str, outcome: str):
         target: The object/subject of the action (never include sensitive data).
         outcome: The result of the action (e.g., "success" or "failure").
     """
-    timestamp = datetime.utcnow().isoformat() + "Z"
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     entry = f"[{timestamp}] actor={actor} action={action} target={target} outcome={outcome}"
     storage.append_audit(entry)
 
