@@ -151,6 +151,86 @@ The test suite is organized in `tests/`:
 
 **Total: 60+ test cases covering all core functionality.**
 
+## Fuzzing System
+
+Automated fuzzing harness for comprehensive security testing of the ABA CLI.
+
+### Quick Start
+
+```bash
+# Run the full fuzzing pipeline (generates 1000 test cases)
+python -u fuzzer/fuzz_generator.py | python -u main.py | python -u fuzzer/fuzz_checker.py > fuzzer/fuzz_results.txt
+
+# View results summary
+tail -n 50 fuzzer/fuzz_results.txt
+```
+
+### Components
+
+The fuzzer consists of three scripts connected by pipes:
+
+- **fuzz_generator.py** — Generates 1000 test cases covering valid, boundary, malformed, and attack scenarios
+- **fuzz_checker.py** — Validates ABA responses against expected patterns using regex
+- **fuzz_config.py** — Shared configuration with field limits, credentials, and regex patterns
+
+### Test Coverage
+
+The fuzzer generates 1000 test cases with the following minimum coverage:
+
+- **50 unauthenticated command attempts** — Verify access is denied without login
+- **30 lockout sequences** — Test account lockout after 5 wrong password attempts
+- **50 path traversal attacks** — Test for directory traversal vulnerabilities
+- **50 oversized field attempts** — Test field length validation
+- **30 cross-user access attempts** — Verify users can't access each other's records
+- **100 random garbage commands** — Test error handling for invalid input
+- **200+ valid session flows** — Test realistic login/command/logout sequences
+- **400+ boundary and malformed tests** — Test edge cases and invalid formats
+
+### Test Categories
+
+- **Valid (30%)** — Realistic, well-formed inputs with expected success
+- **Boundary (30%)** — Field limits, empty fields, oversized inputs
+- **Malformed (25%)** — Invalid format, garbage data, missing fields
+- **Attack (15%)** — Path traversal, SQL injection, shell injection, fuzzing payloads
+
+### Output
+
+The fuzzer produces a detailed report: `fuzzer/fuzz_results.txt`
+
+```
+[PASS] Case 0001 | valid | login alice Alice@1234
+[FAIL] Case 0025 | attack | addrec ../../../../etc/passwd ...
+[CRASH] Case 0073 | malformed | <random garbage>
+...
+============================================================
+FUZZ RESULTS SUMMARY
+============================================================
+Total Cases:    1000
+Passed:         980
+Failed:         15
+Crashed:        5
+Pass Rate:      98.0%
+============================================================
+```
+
+### Attack Payloads Tested
+
+- Path traversal: `../../../etc/passwd`, `/etc/shadow`
+- Shell injection: `;`, `|`, `&`, `$()`, `` ` ``, `>`
+- SQL injection: `'; DROP TABLE;`, `--`
+- Null bytes: `\x00`
+- Unicode and ANSI escape sequences
+- Very long strings (1000+ characters)
+- Malformed CSV and oversized files
+
+### Technical Details
+
+- **Reproducibility**: All tests use a seeded RNG (seed stored in expected_results.json)
+- **Buffering**: Uses `python -u` flag and explicit `sys.stdout.flush()` to prevent pipe deadlocks
+- **Session state**: Tracks simulated login state across test sequences
+- **Crash detection**: Identifies Python tracebacks, exceptions, segfaults
+- **Temporary files**: Automatic cleanup of generated import files
+
 ## Features
 
 - **COMP 365 Specification Compliant** — Meets formal address book application requirements
